@@ -150,7 +150,7 @@ public class GitService {
 
     public void cleanUpDirectory(File workingDir) throws IOException {
         log.debug("Cleaning up directory {}", workingDir);
-        FileUtils.deleteDirectory(workingDir);
+        //        FileUtils.deleteDirectory(workingDir);
     }
 
     private CredentialsProvider getCredentialProvider(User user, GitProvider gitProvider) {

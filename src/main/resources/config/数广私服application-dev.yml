@@ -126,16 +126,16 @@ jhipster:
 # ===================================================================
 
 application:
-  tmp-folder: F:\GitHub\jhipster-online\tmp
-  jhipster-cmd:
-    cmd: F:\GitHub\jhipster-online\cmd\jhipster.cmd
-    timeout: 120
+  #    tmp-folder: /tmp
+  #    jhipster-cmd:
+  #        cmd: XXX
+  #        timeout: 120
   #    github:
   #        host: https://github.com
   #        client-id: XXX
   #        client-secret: XXX
   gitlab:
-    host: https://gitlab.com
-    client-id: 0d5f714b89da85776a292a1ce35c98ca852ba834988402920db686b39f173641
-    client-secret: a151fac8847a8e6533b016798507c4d405411c684e344f65a25117608b02f41a
+    host: http://gitlab.dg.com/
+    client-id: f3c5bc8c3a447f4f193ccee01184334bd38aef6ac7aa9fabccdcc111e4229a49
+    client-secret: d4ba8dee5629abad47e5cc2d64d6a5e97005fb22d9d7f63860b9e8189aaba4c5
     redirect-uri: http://localhost:8081/api/gitlab/callback
