@@ -1,15 +1,15 @@
 /**
  * Copyright 2017-2020 the original author or authors from the JHipster Online project.
- *
+ * <p>
  * This file is part of the JHipster Online project, see https://github.com/jhipster/jhipster-online
  * for more information.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -150,7 +150,13 @@ public class GitService {
 
     public void cleanUpDirectory(File workingDir) throws IOException {
         log.debug("Cleaning up directory {}", workingDir);
-        //        FileUtils.deleteDirectory(workingDir);
+        try {
+            FileUtils.deleteDirectory(workingDir);
+        } // pack文件会删除异常
+        catch (IOException e) {
+            log.debug("文件删除异常" + workingDir);
+            log.debug(e.getMessage());
+        }
     }
 
     private CredentialsProvider getCredentialProvider(User user, GitProvider gitProvider) {

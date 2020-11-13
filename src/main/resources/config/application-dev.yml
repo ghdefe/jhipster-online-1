@@ -126,6 +126,7 @@ jhipster:
 # ===================================================================
 
 application:
+  #  jhipster程序路径
   tmp-folder: F:\GitHub\jhipster-online\tmp
   jhipster-cmd:
     cmd: F:\GitHub\jhipster-online\cmd\jhipster.cmd
@@ -134,6 +135,7 @@ application:
   #        host: https://github.com
   #        client-id: XXX
   #        client-secret: XXX
+  #  gitlab私服地址配置
   gitlab:
     host: https://gitlab.com
     client-id: 0d5f714b89da85776a292a1ce35c98ca852ba834988402920db686b39f173641
