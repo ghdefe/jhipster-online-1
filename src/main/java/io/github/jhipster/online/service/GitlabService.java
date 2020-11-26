@@ -1,15 +1,15 @@
 /**
  * Copyright 2017-2020 the original author or authors from the JHipster Online project.
- *
+ * <p>
  * This file is part of the JHipster Online project, see https://github.com/jhipster/jhipster-online
  * for more information.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,13 +30,19 @@ import io.github.jhipster.online.service.interfaces.GitProviderService;
 import java.io.IOException;
 import java.lang.module.FindException;
 import java.net.ConnectException;
+import java.net.URISyntaxException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.transport.URIish;
 import org.gitlab.api.GitlabAPI;
 import org.gitlab.api.GitlabAPIException;
 import org.gitlab.api.TokenType;
+import org.gitlab.api.models.GitlabGroup;
 import org.gitlab.api.models.GitlabMergeRequest;
 import org.gitlab.api.models.GitlabProject;
 import org.gitlab.api.models.GitlabUser;
@@ -116,7 +122,7 @@ public class GitlabService implements GitProviderService {
 
     @Transactional
     @Override
-    public void syncUserFromGitProvider() throws IOException {
+    public void syncUserFromGitProvider() throws IOException, URISyntaxException {
         Optional<String> currentUserLogin = SecurityUtils.getCurrentUserLogin();
         Optional<User> user = userRepository.findOneByLogin(currentUserLogin.orElse(null));
         if (user.isPresent()) {
@@ -128,7 +134,7 @@ public class GitlabService implements GitProviderService {
 
     @Transactional
     @Override
-    public User getSyncedUserFromGitProvider(User user) throws IOException {
+    public User getSyncedUserFromGitProvider(User user) throws IOException, URISyntaxException {
         log.info("Syncing user `{}` with GitLab...", user.getLogin());
         StopWatch watch = new StopWatch();
         watch.start();
@@ -177,38 +183,35 @@ public class GitlabService implements GitProviderService {
 
         // Sync the projects from the user's groups
         Set<GitCompany> updatedGitlabCompanies = new HashSet<>();
-        gitlab
-            .getGroups()
-            .forEach(
-                group -> {
-                    log.debug("Syncing organization `{}`", group.getName());
-                    GitCompany company;
-                    Optional<GitCompany> currentGitlabCompany = currentGitlabCompanies
-                        .stream()
-                        .filter(g -> g.getName().equals(group.getName()))
-                        .findFirst();
+        for (GitlabGroup group : gitlab.getGroups()) {
+            log.debug("Syncing organization `{}`", group.getName());
+            GitCompany company;
+            Optional<GitCompany> currentGitlabCompany = currentGitlabCompanies
+                .stream()
+                .filter(g -> g.getName().equals(group.getName()))
+                .findFirst();
 
-                    if (!currentGitlabCompany.isPresent()) {
-                        log.debug("Saving new company `{}`", group.getName());
-                        company = new GitCompany();
-                        company.setName(group.getName());
-                        company.setUser(user);
-                        company.setGitProvider(GitProvider.GITLAB.getValue());
-                        gitCompanyRepository.save(company);
-                    } else {
-                        company = currentGitlabCompany.get();
-                    }
-                    log.debug("Adding company `{}` to user", company.getName());
-                    updatedGitlabCompanies.add(company);
-                    try {
-                        List<GitlabProject> projectList = gitlab.getGroupProjects(group);
-                        List<String> projects = projectList.stream().map(GitlabProject::getName).collect(Collectors.toList());
-                        company.setGitProjects(projects);
-                    } catch (IOException e) {
-                        log.error("Could not sync GitLab repositories for user `{}`: {}", user.getLogin(), e.getMessage());
-                    }
-                }
-            );
+            if (!currentGitlabCompany.isPresent()) {
+                log.debug("Saving new company `{}`", group.getName());
+                company = new GitCompany();
+                company.setName(getGitlabGroupPath(group.getWebUrl()));
+                //                company.setName(group.getName());
+                company.setUser(user);
+                company.setGitProvider(GitProvider.GITLAB.getValue());
+                gitCompanyRepository.save(company);
+            } else {
+                company = currentGitlabCompany.get();
+            }
+            log.debug("Adding company `{}` to user", company.getName());
+            updatedGitlabCompanies.add(company);
+            try {
+                List<GitlabProject> projectList = gitlab.getGroupProjects(group);
+                List<String> projects = projectList.stream().map(GitlabProject::getName).collect(Collectors.toList());
+                company.setGitProjects(projects);
+            } catch (IOException e) {
+                log.error("Could not sync GitLab repositories for user `{}`: {}", user.getLogin(), e.getMessage());
+            }
+        }
 
         user.setGitCompanies(updatedGitlabCompanies);
         watch.stop();
@@ -239,7 +242,11 @@ public class GitlabService implements GitProviderService {
             } else {
                 log.debug("Repository {} belongs to organization {}", repositoryName, group);
                 log.info("Creating repository {} / {}", group, repositoryName);
-                gitlab.createProjectForGroup(repositoryName, gitlab.getGroup(group));
+                GitlabGroup gitlabGroup = getGitlabGroup(user, group);
+                gitlab.createProjectForGroup(repositoryName, gitlabGroup);
+                //                // 修改主要针对子群组创建失败的问题
+                //                gitlab.createProjectForGroup(repositoryName, gitlabGroup);  //改为传入GitlabGroup
+                //                group = getGitlabGroupPath(gitlab, gitlabGroup); // 修改group值为正确的路径
             }
             this.logsService.addLog(applicationId, "GitLab repository created!");
 
@@ -303,5 +310,46 @@ public class GitlabService implements GitProviderService {
     public void deleteAllOrganizationsUser(User user) {
         log.debug("Request to delete all gitlab groups for user {}", user.getLogin());
         gitCompanyRepository.deleteAllByUserLoginAndGitProvider(user.getLogin(), GitProvider.GITLAB.getValue());
+    }
+
+    /**
+     * 根据群组名字得到群组id
+     *
+     * @param user
+     * @param group
+     * @return
+     * @throws IOException
+     */
+    public GitlabGroup getGitlabGroup(User user, String group) throws IOException {
+        GitlabAPI gitlab = getConnection(user);
+        log.debug("筛选符合条件的群组");
+        List<GitlabGroup> groups = gitlab.getGroups();
+        List<GitlabGroup> gitlabGroups = groups
+            .stream()
+            .filter(gitlabGroup -> gitlabGroup.getName().equals(group))
+            .collect(Collectors.toList());
+        if (gitlabGroups.size() > 1 || gitlabGroups.size() <= 0) {
+            log.debug("群组异常");
+            throw new IOException("存在同名群组或群组不存在");
+        }
+        GitlabGroup gitlabGroup = gitlabGroups.get(0);
+        log.debug("群组name:{}，id:{}", gitlabGroup.getName(), gitlabGroup.getId());
+        return gitlabGroup;
+    }
+
+    /**
+     * 得到正确的群组路径
+     * @param webUrl
+     * @return
+     * @throws URISyntaxException
+     */
+    public String getGitlabGroupPath(String webUrl) throws URISyntaxException {
+        Pattern pattern = Pattern.compile("/groups/(.*?)$");
+        Matcher matcher = pattern.matcher(webUrl);
+        if (matcher.find()) {
+            return matcher.group(1);
+        } else {
+            throw new URISyntaxException("不能匹配到正确的群组路径", "错误");
+        }
     }
 }

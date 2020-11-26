@@ -36,7 +36,7 @@ spring:
       indent-output: true
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
-    url: jdbc:mysql://localhost:3306/jhipster_online?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC&createDatabaseIfNotExist=true
+    url: jdbc:mysql://localhost:3306/jhipster_online_test?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC&createDatabaseIfNotExist=true
     username: root
     password: 123456
     hikari:
@@ -48,7 +48,7 @@ spring:
         prepStmtCacheSqlLimit: 2048
         useServerPrepStmts: true
   jpa:
-    show-sql: false
+    show-sql: true
     properties:
       hibernate.id.new_generator_mappings: true
       hibernate.connection.provider_disables_autocommit: true
@@ -137,7 +137,7 @@ application:
   #        client-secret: XXX
   #  gitlab私服地址配置
   gitlab:
-    host: https://gitlab.com
-    client-id: 0d5f714b89da85776a292a1ce35c98ca852ba834988402920db686b39f173641
-    client-secret: a151fac8847a8e6533b016798507c4d405411c684e344f65a25117608b02f41a
+    host: http://172.16.0.73:11180
+    client-id: 0f23a8d50cbac4e1dec4245df547aa7791e98240e49b379a1fbdb9582a129a50
+    client-secret: aaabdf8b92b78b2803f6ab2a9020742409371762c4e402aeaaff2996fccd2a5b
     redirect-uri: http://localhost:8081/api/gitlab/callback

@@ -20,6 +20,7 @@ package io.github.jhipster.online.service.interfaces;
 
 import io.github.jhipster.online.domain.User;
 import java.io.IOException;
+import java.net.URISyntaxException;
 
 public interface GitProviderService {
     boolean isEnabled();
@@ -28,9 +29,9 @@ public interface GitProviderService {
 
     String getClientId();
 
-    void syncUserFromGitProvider() throws IOException;
+    void syncUserFromGitProvider() throws IOException, URISyntaxException;
 
-    User getSyncedUserFromGitProvider(User user) throws IOException;
+    User getSyncedUserFromGitProvider(User user) throws IOException, URISyntaxException;
 
     void createGitProviderRepository(
         User user,

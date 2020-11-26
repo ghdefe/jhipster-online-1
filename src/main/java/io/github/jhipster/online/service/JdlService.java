@@ -100,6 +100,8 @@ public class JdlService {
 
             File workingDir = new File(applicationProperties.getTmpFolder() + "/jhipster/applications/" + applyJdlId);
             FileUtils.forceMkdir(workingDir);
+
+            // organizationName需要修改
             Git git = this.gitService.cloneRepository(user, workingDir, organizationName, projectName, gitProvider);
 
             String branchName = "jhipster-entities-" + applyJdlId;

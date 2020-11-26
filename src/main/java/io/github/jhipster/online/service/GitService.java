@@ -152,8 +152,7 @@ public class GitService {
         log.debug("Cleaning up directory {}", workingDir);
         try {
             FileUtils.deleteDirectory(workingDir);
-        } // pack文件会删除异常
-        catch (IOException e) {
+        } catch (IOException e) { // pack文件会删除异常
             log.debug("文件删除异常" + workingDir);
             log.debug(e.getMessage());
         }
