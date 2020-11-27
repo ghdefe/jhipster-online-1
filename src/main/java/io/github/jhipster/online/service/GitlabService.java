@@ -167,7 +167,6 @@ public class GitlabService implements GitProviderService {
             List<GitlabProject> projectList = gitlab
                 .getMembershipProjects()
                 .stream()
-                // 修改1. 此处改动为null可读，子群组下的项目owner会获取到null
                 .filter(p -> p.getOwner() != null && p.getOwner().getId().equals(myself.getId()))
                 .collect(Collectors.toList());
 
@@ -185,7 +184,7 @@ public class GitlabService implements GitProviderService {
             GitCompany company;
             Optional<GitCompany> currentGitlabCompany = currentGitlabCompanies
                 .stream()
-                // 改动3 过滤条件修改
+                // 改动 过滤条件修改
                 .filter(
                     g -> {
                         try {
