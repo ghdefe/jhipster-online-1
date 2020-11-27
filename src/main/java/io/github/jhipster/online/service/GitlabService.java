@@ -128,7 +128,7 @@ public class GitlabService implements GitProviderService {
         }
     }
 
-    @Transactional
+    //    @Transactional
     @Override
     public User getSyncedUserFromGitProvider(User user) throws IOException, URISyntaxException {
         log.info("Syncing user `{}` with GitLab...", user.getLogin());
@@ -168,7 +168,7 @@ public class GitlabService implements GitProviderService {
                 .getMembershipProjects()
                 .stream()
                 // 修改1. 此处改动为null可读，子群组下的项目owner会获取到null
-                .filter(p -> p.getOwner() == null || p.getOwner().getId().equals(myself.getId()))
+                .filter(p -> p.getOwner() != null && p.getOwner().getId().equals(myself.getId()))
                 .collect(Collectors.toList());
 
             List<String> projects = projectList.stream().map(GitlabProject::getName).collect(Collectors.toList());
