@@ -17,15 +17,17 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { newArray } from '@angular/compiler/src/util';
 
 @Injectable({ providedIn: 'root' })
 export class JdlService {
   constructor(private http: HttpClient) {}
 
   doApplyJdl(gitProvider: string, organizationName: string, projectName: string, jdlId: string): Observable<string> {
-    return this.http.post(`api/apply-jdl/${gitProvider}/${organizationName}/${projectName}/${jdlId}`, '', { responseType: 'text' });
+    const params = new HttpParams().set('organizationName', organizationName);
+    return this.http.post(`api/apply-jdl/${gitProvider}/${projectName}/${jdlId}`, '', { params, responseType: 'text' });
   }
 
   getApplyJdlLogs(applyJdlId: string): Observable<string> {

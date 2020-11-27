@@ -305,10 +305,10 @@ public class GitResource {
     /**
      * Get the projects belonging to an organization.
      */
-    @GetMapping("/{gitProvider}/companies/{companyName}/projects")
+    @GetMapping("/GitLab/companies/projects/")
     @Secured(AuthoritiesConstants.USER)
-    public @ResponseBody ResponseEntity getOrganizationProjects(@PathVariable String gitProvider, @PathVariable String companyName) {
-        Optional<GitProvider> maybeGitProvider = GitProvider.getGitProviderByValue(gitProvider);
+    public ResponseEntity getOrganizationProjects(@RequestParam String companyName) {
+        Optional<GitProvider> maybeGitProvider = GitProvider.getGitProviderByValue("GitLab");
         return maybeGitProvider
             .<ResponseEntity>map(
                 gitProvider1 -> new ResponseEntity<>(this.userService.getProjects(companyName, gitProvider1), HttpStatus.OK)

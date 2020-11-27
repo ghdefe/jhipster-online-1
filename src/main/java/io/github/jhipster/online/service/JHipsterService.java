@@ -135,6 +135,11 @@ public class JHipsterService {
             while ((line = input.readLine()) != null) {
                 log.debug(line);
                 this.logsService.addLog(generationId, line);
+                // 响应式，jhi生成完成就打断子线程
+                if (line.equals("INFO! Congratulations, JHipster execution is complete!")) {
+                    p.destroyForcibly();
+                    break;
+                }
             }
 
             input.close();

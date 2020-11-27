@@ -35,12 +35,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.transport.URIish;
 import org.gitlab.api.GitlabAPI;
-import org.gitlab.api.GitlabAPIException;
 import org.gitlab.api.TokenType;
 import org.gitlab.api.models.GitlabGroup;
 import org.gitlab.api.models.GitlabMergeRequest;
@@ -171,7 +167,8 @@ public class GitlabService implements GitProviderService {
             List<GitlabProject> projectList = gitlab
                 .getMembershipProjects()
                 .stream()
-                .filter(p -> p.getOwner() != null && p.getOwner().getId().equals(myself.getId()))
+                // 修改1. 此处改动为null可读，子群组下的项目owner会获取到null
+                .filter(p -> p.getOwner() == null || p.getOwner().getId().equals(myself.getId()))
                 .collect(Collectors.toList());
 
             List<String> projects = projectList.stream().map(GitlabProject::getName).collect(Collectors.toList());
@@ -188,14 +185,24 @@ public class GitlabService implements GitProviderService {
             GitCompany company;
             Optional<GitCompany> currentGitlabCompany = currentGitlabCompanies
                 .stream()
-                .filter(g -> g.getName().equals(group.getName()))
+                // 改动3 过滤条件修改
+                .filter(
+                    g -> {
+                        try {
+                            return g.getName().equals(getGitlabGroupPath(group.getWebUrl()));
+                        } catch (URISyntaxException e) {
+                            e.printStackTrace();
+                        }
+                        return false;
+                    }
+                )
                 .findFirst();
 
             if (!currentGitlabCompany.isPresent()) {
                 log.debug("Saving new company `{}`", group.getName());
                 company = new GitCompany();
+                // 修改2. 把群组名改为全路径名字
                 company.setName(getGitlabGroupPath(group.getWebUrl()));
-                //                company.setName(group.getName());
                 company.setUser(user);
                 company.setGitProvider(GitProvider.GITLAB.getValue());
                 gitCompanyRepository.save(company);
@@ -242,11 +249,7 @@ public class GitlabService implements GitProviderService {
             } else {
                 log.debug("Repository {} belongs to organization {}", repositoryName, group);
                 log.info("Creating repository {} / {}", group, repositoryName);
-                GitlabGroup gitlabGroup = getGitlabGroup(user, group);
-                gitlab.createProjectForGroup(repositoryName, gitlabGroup);
-                //                // 修改主要针对子群组创建失败的问题
-                //                gitlab.createProjectForGroup(repositoryName, gitlabGroup);  //改为传入GitlabGroup
-                //                group = getGitlabGroupPath(gitlab, gitlabGroup); // 修改group值为正确的路径
+                gitlab.createProjectForGroup(repositoryName, gitlab.getGroup(group));
             }
             this.logsService.addLog(applicationId, "GitLab repository created!");
 
@@ -313,32 +316,7 @@ public class GitlabService implements GitProviderService {
     }
 
     /**
-     * 根据群组名字得到群组id
-     *
-     * @param user
-     * @param group
-     * @return
-     * @throws IOException
-     */
-    public GitlabGroup getGitlabGroup(User user, String group) throws IOException {
-        GitlabAPI gitlab = getConnection(user);
-        log.debug("筛选符合条件的群组");
-        List<GitlabGroup> groups = gitlab.getGroups();
-        List<GitlabGroup> gitlabGroups = groups
-            .stream()
-            .filter(gitlabGroup -> gitlabGroup.getName().equals(group))
-            .collect(Collectors.toList());
-        if (gitlabGroups.size() > 1 || gitlabGroups.size() <= 0) {
-            log.debug("群组异常");
-            throw new IOException("存在同名群组或群组不存在");
-        }
-        GitlabGroup gitlabGroup = gitlabGroups.get(0);
-        log.debug("群组name:{}，id:{}", gitlabGroup.getName(), gitlabGroup.getId());
-        return gitlabGroup;
-    }
-
-    /**
-     * 得到正确的群组路径
+     * 从webUrl得到正确的群组路径
      * @param webUrl
      * @return
      * @throws URISyntaxException

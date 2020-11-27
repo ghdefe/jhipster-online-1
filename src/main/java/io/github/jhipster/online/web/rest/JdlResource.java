@@ -146,11 +146,11 @@ public class JdlResource {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @PostMapping("/apply-jdl/{gitProvider}/{organizationName}/{projectName}/{jdlId}")
+    @PostMapping("/apply-jdl/{gitProvider}/{projectName}/{jdlId}")
     @Secured(AuthoritiesConstants.USER)
     public ResponseEntity<String> applyJdl(
+        @RequestParam String organizationName,
         @PathVariable String gitProvider,
-        @PathVariable String organizationName,
         @PathVariable String projectName,
         @PathVariable String jdlId
     ) {

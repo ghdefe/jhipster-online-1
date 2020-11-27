@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { GitCompanyModel } from 'app/core/git/git-company.model';
@@ -39,7 +39,8 @@ export class GitProviderService {
   }
 
   getProjects(provider: string, companyName: string): Observable<string[]> {
-    return this.http.get<string[]>(`api/${provider}/companies/${companyName}/projects`);
+    const params = new HttpParams().set('companyName', companyName);
+    return this.http.get<string[]>(`api/${provider}/companies/projects/`, { params });
   }
 
   getGitConfig(): Observable<any> {
