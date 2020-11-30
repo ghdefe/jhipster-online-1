@@ -69,7 +69,7 @@ spring:
     cache: false
 
 server:
-  port: 8080
+  port: 8081
 
 # ===================================================================
 # JHipster specific properties
@@ -125,19 +125,19 @@ jhipster:
 # https://www.jhipster.tech/common-application-properties/
 # ===================================================================
 
-#application:
-#  #  jhipster程序路径
-#  tmp-folder: F:\GitHub\jhipster-online\tmp
-#  jhipster-cmd:
-#    cmd: F:\GitHub\jhipster-online\cmd\jhipster.cmd
-#    timeout: 120
-#  #    github:
-#  #        host: https://github.com
-#  #        client-id: XXX
-#  #        client-secret: XXX
-#  #  gitlab私服地址配置
-#  gitlab:
-#    host: http://172.16.0.73:11180
-#    client-id: 0f23a8d50cbac4e1dec4245df547aa7791e98240e49b379a1fbdb9582a129a50
-#    client-secret: aaabdf8b92b78b2803f6ab2a9020742409371762c4e402aeaaff2996fccd2a5b
-#    redirect-uri: http://localhost:8081/api/gitlab/callback
+application:
+  #  jhipster程序路径
+  tmp-folder: F:\GitHub\jhipster-online\tmp
+  jhipster-cmd:
+    cmd: F:\GitHub\jhipster-online\cmd\jhipster.cmd
+    timeout: 120
+  #    github:
+  #        host: https://github.com
+  #        client-id: XXX
+  #        client-secret: XXX
+  #  gitlab私服地址配置
+  gitlab:
+    host: http://172.16.0.73:11180
+    client-id: 0f23a8d50cbac4e1dec4245df547aa7791e98240e49b379a1fbdb9582a129a50
+    client-secret: aaabdf8b92b78b2803f6ab2a9020742409371762c4e402aeaaff2996fccd2a5b
+    redirect-uri: http://localhost:8081/api/gitlab/callback

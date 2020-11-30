@@ -35,6 +35,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
 import org.gitlab.api.GitlabAPI;
 import org.gitlab.api.TokenType;
@@ -128,7 +129,7 @@ public class GitlabService implements GitProviderService {
         }
     }
 
-    //    @Transactional
+    @Transactional
     @Override
     public User getSyncedUserFromGitProvider(User user) throws IOException, URISyntaxException {
         log.info("Syncing user `{}` with GitLab...", user.getLogin());
@@ -177,24 +178,34 @@ public class GitlabService implements GitProviderService {
         }
         currentGitlabCompanies.add(gitCompany);
 
-        // Sync the projects from the user's groups
+        // 同步用户的群组
+        List<GitlabGroup> gitlabGroups = gitlab.getGroups();
+        HashSet<GitCompany> gitCompaniesDeleted = new HashSet<>();
+        //更新被删除群组
+        for (GitCompany currentGitlabCompany : currentGitlabCompanies) {
+            Optional<GitlabGroup> group = gitlabGroups
+                .stream()
+                .filter(gitlabGroup -> getGitlabGroupPath(gitlabGroup.getWebUrl()).equals(currentGitlabCompany.getName()))
+                .findFirst();
+            if (group.isEmpty() && !currentGitlabCompany.getName().equals(myself.getUsername())) {
+                System.out.println(currentGitlabCompany.getName());
+                System.out.println(myself.getUsername());
+                System.out.println(currentGitlabCompany.getName().equals(myself.getUsername()));
+                gitCompaniesDeleted.add(currentGitlabCompany);
+            }
+        }
+        currentGitlabCompanies.removeAll(gitCompaniesDeleted);
+        gitCompanyRepository.deleteAll(gitCompaniesDeleted);
+
+        // 更新增加群组
         Set<GitCompany> updatedGitlabCompanies = new HashSet<>();
-        for (GitlabGroup group : gitlab.getGroups()) {
+        for (GitlabGroup group : gitlabGroups) {
             log.debug("Syncing organization `{}`", group.getName());
             GitCompany company;
             Optional<GitCompany> currentGitlabCompany = currentGitlabCompanies
                 .stream()
                 // 改动 过滤条件修改
-                .filter(
-                    g -> {
-                        try {
-                            return g.getName().equals(getGitlabGroupPath(group.getWebUrl()));
-                        } catch (URISyntaxException e) {
-                            e.printStackTrace();
-                        }
-                        return false;
-                    }
-                )
+                .filter(g -> g.getName().equals(getGitlabGroupPath(group.getWebUrl())))
                 .findFirst();
 
             if (!currentGitlabCompany.isPresent()) {
@@ -316,17 +327,17 @@ public class GitlabService implements GitProviderService {
 
     /**
      * 从webUrl得到正确的群组路径
+     *
      * @param webUrl
      * @return
      * @throws URISyntaxException
      */
-    public String getGitlabGroupPath(String webUrl) throws URISyntaxException {
+    public String getGitlabGroupPath(String webUrl) {
         Pattern pattern = Pattern.compile("/groups/(.*?)$");
         Matcher matcher = pattern.matcher(webUrl);
         if (matcher.find()) {
             return matcher.group(1);
-        } else {
-            throw new URISyntaxException("不能匹配到正确的群组路径", "错误");
         }
+        return null;
     }
 }
