@@ -27,15 +27,14 @@ import io.github.jhipster.online.repository.GitCompanyRepository;
 import io.github.jhipster.online.repository.UserRepository;
 import io.github.jhipster.online.security.SecurityUtils;
 import io.github.jhipster.online.service.interfaces.GitProviderService;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.lang.module.FindException;
 import java.net.ConnectException;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
 import org.gitlab.api.GitlabAPI;
 import org.gitlab.api.TokenType;
@@ -179,25 +178,27 @@ public class GitlabService implements GitProviderService {
         currentGitlabCompanies.add(gitCompany);
 
         // 同步用户的群组
+        log.debug("开始同步群组");
         List<GitlabGroup> gitlabGroups = gitlab.getGroups();
-        HashSet<GitCompany> gitCompaniesDeleted = new HashSet<>();
         //更新被删除群组
+        log.debug("寻找被删除的群组");
+        HashSet<GitCompany> gitCompaniesDeleted = new HashSet<>();
         for (GitCompany currentGitlabCompany : currentGitlabCompanies) {
             Optional<GitlabGroup> group = gitlabGroups
                 .stream()
                 .filter(gitlabGroup -> getGitlabGroupPath(gitlabGroup.getWebUrl()).equals(currentGitlabCompany.getName()))
                 .findFirst();
             if (group.isEmpty() && !currentGitlabCompany.getName().equals(myself.getUsername())) {
-                System.out.println(currentGitlabCompany.getName());
-                System.out.println(myself.getUsername());
-                System.out.println(currentGitlabCompany.getName().equals(myself.getUsername()));
+                log.debug("被删除的群组：{}", currentGitlabCompany.getName());
                 gitCompaniesDeleted.add(currentGitlabCompany);
             }
         }
+        log.debug("开始删除被删除的群组");
         currentGitlabCompanies.removeAll(gitCompaniesDeleted);
         gitCompanyRepository.deleteAll(gitCompaniesDeleted);
 
         // 更新增加群组
+        log.debug("寻找增加的群组");
         Set<GitCompany> updatedGitlabCompanies = new HashSet<>();
         for (GitlabGroup group : gitlabGroups) {
             log.debug("Syncing organization `{}`", group.getName());
@@ -225,8 +226,14 @@ public class GitlabService implements GitProviderService {
                 List<GitlabProject> projectList = gitlab.getGroupProjects(group);
                 List<String> projects = projectList.stream().map(GitlabProject::getName).collect(Collectors.toList());
                 company.setGitProjects(projects);
+                //                testException();
             } catch (IOException e) {
                 log.error("Could not sync GitLab repositories for user `{}`: {}", user.getLogin(), e.getMessage());
+            } catch (Error error) {
+                // gitlab会出现群组列表有A群组，但没有权限访问A群组的情况，此时GitlabAPI模块会抛出错误，先捕捉起来
+                log.error("同步项目发生错误：{}", error.getMessage());
+                log.error("请检查gitlab权限");
+                log.debug("可能的原因是：gitlab会出现群组列表有A群组，但没有权限访问A群组的情况，此时GitlabAPI模块会抛出错误");
             }
         }
 
@@ -234,6 +241,10 @@ public class GitlabService implements GitProviderService {
         watch.stop();
         log.info("Finished syncing user `{}` with GitLab in {} ms", user.getLogin(), watch.getTotalTimeMillis());
         return user;
+    }
+
+    void testException() throws FileNotFoundException {
+        throw new FileNotFoundException("test");
     }
 
     /**
@@ -330,7 +341,6 @@ public class GitlabService implements GitProviderService {
      *
      * @param webUrl
      * @return
-     * @throws URISyntaxException
      */
     public String getGitlabGroupPath(String webUrl) {
         Pattern pattern = Pattern.compile("/groups/(.*?)$");

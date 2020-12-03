@@ -20,6 +20,8 @@
 package io.github.jhipster.online.web.rest.errors;
 
 import io.github.jhipster.web.util.HeaderUtil;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
