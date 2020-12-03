@@ -1,15 +1,15 @@
 /**
  * Copyright 2017-2020 the original author or authors from the JHipster Online project.
- *
+ * <p>
  * This file is part of the JHipster Online project, see https://github.com/jhipster/jhipster-online
  * for more information.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,15 +22,14 @@ package io.github.jhipster.online.service;
 import io.github.jhipster.online.config.ApplicationProperties;
 import io.github.jhipster.online.domain.User;
 import io.github.jhipster.online.domain.enums.GitProvider;
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StopWatch;
 import org.zeroturnaround.zip.ZipUtil;
@@ -80,6 +79,7 @@ public class GeneratorService {
     )
         throws IOException, GitAPIException, URISyntaxException {
         File workingDir = generateApplication(applicationId, applicationConfiguration);
+        generateCICDYml(workingDir);
         this.logsService.addLog(applicationId, "Pushing the application to the Git remote repository");
         this.gitService.pushNewApplicationToGit(user, workingDir, githubOrganization, repositoryName, gitProvider);
         this.logsService.addLog(applicationId, "Application successfully pushed!");
@@ -108,5 +108,23 @@ public class GeneratorService {
 
     private void zipResult(File workingDir) {
         ZipUtil.pack(workingDir, new File(workingDir + ".zip"));
+    }
+
+    private void generateCICDYml(File workingDir) throws IOException {
+        log.info("开始生成.gitlab-ci.yml文件");
+        File yml = new File(workingDir, ".gitlab-ci.yml");
+        try (
+            InputStream inputStream = new ClassPathResource("cicd\\gitlab.yml").getInputStream();
+            FileOutputStream fileOutputStream = new FileOutputStream(yml)
+        ) {
+            if (!yml.exists()) {
+                yml.createNewFile();
+            }
+            byte[] buf = new byte[1024];
+            int length;
+            while ((length = inputStream.read(buf)) > 0) {
+                fileOutputStream.write(buf, 0, length);
+            }
+        }
     }
 }
