@@ -1,15 +1,15 @@
 /**
  * Copyright 2017-2020 the original author or authors from the JHipster Online project.
- *
+ * <p>
  * This file is part of the JHipster Online project, see https://github.com/jhipster/jhipster-online
  * for more information.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@
 package io.github.jhipster.online.service;
 
 import io.github.jhipster.config.JHipsterProperties;
+import io.github.jhipster.online.config.ApplicationProperties;
 import io.github.jhipster.online.config.CacheConfiguration;
 import io.github.jhipster.online.config.Constants;
 import io.github.jhipster.online.domain.Authority;
@@ -38,9 +39,13 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.gitlab.api.GitlabAPI;
+import org.gitlab.api.TokenType;
+import org.gitlab.api.models.GitlabUser;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -79,29 +84,32 @@ public class UserService {
 
     private final JdlService jdlService;
 
+    private final ApplicationProperties applicationProperties;
+
     public UserService(
         UserRepository userRepository,
+        GithubService githubService,
+        GitlabService gitlabService,
+        GitCompanyRepository gitCompanyRepository,
+        JHipsterProperties jHipsterProperties,
         PasswordEncoder passwordEncoder,
         AuthorityRepository authorityRepository,
-        GithubService githubService,
         CacheManager cacheManager,
-        MailService mailService,
-        JHipsterProperties jHipsterProperties,
-        GitCompanyRepository gitCompanyRepository,
-        GitlabService gitlabService,
         JdlMetadataService jdlMetadataService,
-        JdlService jdlService
+        JdlService jdlService,
+        ApplicationProperties applicationProperties
     ) {
         this.userRepository = userRepository;
+        this.githubService = githubService;
+        this.gitlabService = gitlabService;
+        this.gitCompanyRepository = gitCompanyRepository;
+        this.jHipsterProperties = jHipsterProperties;
         this.passwordEncoder = passwordEncoder;
         this.authorityRepository = authorityRepository;
-        this.githubService = githubService;
         this.cacheManager = cacheManager;
-        this.gitCompanyRepository = gitCompanyRepository;
-        this.gitlabService = gitlabService;
-        this.jHipsterProperties = jHipsterProperties;
         this.jdlMetadataService = jdlMetadataService;
         this.jdlService = jdlService;
+        this.applicationProperties = applicationProperties;
     }
 
     public Optional<User> activateRegistration(String key) {
@@ -347,6 +355,17 @@ public class UserService {
             user.setGithubOAuthToken(code);
             user = this.githubService.getSyncedUserFromGitProvider(user);
         } else if (gitProvider.equals(GitProvider.GITLAB)) {
+            // admin只能绑定gitlab账号aap-operator
+            if (user.getLogin().equals("admin")) {
+                GitlabAPI gitlab = GitlabAPI.connect(applicationProperties.getGitlab().getHost(), code, TokenType.ACCESS_TOKEN);
+                if (Objects.nonNull(gitlab)) {
+                    GitlabUser myself = gitlab.getUser();
+                    String bindAdmin = applicationProperties.getGitlab().getBindAdmin();
+                    if (!myself.getUsername().equals(bindAdmin)) {
+                        throw new Exception("admin只能绑定gitlab账号aap-operator");
+                    }
+                }
+            }
             user.setGitlabOAuthToken(code);
             user = this.gitlabService.getSyncedUserFromGitProvider(user);
         }

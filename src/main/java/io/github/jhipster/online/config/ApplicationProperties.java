@@ -126,6 +126,7 @@ public class ApplicationProperties {
         private String clientSecret;
         private String host = "https://gitlab.com";
         private String redirectUri;
+        private String bindAdmin;
 
         public String getClientId() {
             return clientId;
@@ -157,6 +158,14 @@ public class ApplicationProperties {
 
         public void setRedirectUri(String redirectUri) {
             this.redirectUri = redirectUri;
+        }
+
+        public String getBindAdmin() {
+            return bindAdmin;
+        }
+
+        public void setBindAdmin(String bindAdmin) {
+            this.bindAdmin = bindAdmin;
         }
     }
 
