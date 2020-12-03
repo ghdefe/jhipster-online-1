@@ -243,10 +243,6 @@ public class GitlabService implements GitProviderService {
         return user;
     }
 
-    void testException() throws FileNotFoundException {
-        throw new FileNotFoundException("test");
-    }
-
     /**
      * Create a GitLab repository and add the JHipster Bot as collaborator.
      */

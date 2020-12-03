@@ -141,4 +141,4 @@ application:
     client-id: 0f23a8d50cbac4e1dec4245df547aa7791e98240e49b379a1fbdb9582a129a50
     client-secret: aaabdf8b92b78b2803f6ab2a9020742409371762c4e402aeaaff2996fccd2a5b
     redirect-uri: http://localhost:8080/api/gitlab/callback
-    bind-admin: root
+    bind-admin: test

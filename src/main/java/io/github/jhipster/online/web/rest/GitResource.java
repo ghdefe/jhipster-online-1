@@ -31,6 +31,7 @@ import io.github.jhipster.online.service.GitlabService;
 import io.github.jhipster.online.service.UserService;
 import io.github.jhipster.online.service.dto.GitConfigurationDTO;
 import io.github.jhipster.online.util.SanitizeInputs;
+import io.github.jhipster.online.web.rest.errors.AdminBindException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -152,6 +153,9 @@ public class GitResource {
             String jsonResponse = response.thenApply(HttpResponse::body).get(5, TimeUnit.SECONDS);
             GitAccessTokenResponse accessTokenResponse = objectMapper.readValue(jsonResponse, GitAccessTokenResponse.class);
             this.userService.saveToken(accessTokenResponse.getAccess_token(), gitProviderEnum);
+        } catch (AdminBindException e) {
+            log.error("admin用户只能绑定指定gitlab账号");
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e) {
             log.error("OAuth2 token could not saved: ", e);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);

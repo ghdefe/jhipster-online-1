@@ -34,6 +34,7 @@ import io.github.jhipster.online.repository.UserRepository;
 import io.github.jhipster.online.security.AuthoritiesConstants;
 import io.github.jhipster.online.security.SecurityUtils;
 import io.github.jhipster.online.service.dto.UserDTO;
+import io.github.jhipster.online.web.rest.errors.AdminBindException;
 import io.github.jhipster.security.RandomUtil;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -45,7 +46,6 @@ import org.gitlab.api.models.GitlabUser;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -362,7 +362,7 @@ public class UserService {
                     GitlabUser myself = gitlab.getUser();
                     String bindAdmin = applicationProperties.getGitlab().getBindAdmin();
                     if (!myself.getUsername().equals(bindAdmin)) {
-                        throw new Exception("admin只能绑定gitlab账号" + bindAdmin);
+                        throw new AdminBindException("admin只能绑定gitlab账号" + bindAdmin);
                     }
                 }
             }
