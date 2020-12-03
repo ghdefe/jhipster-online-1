@@ -362,7 +362,7 @@ public class UserService {
                     GitlabUser myself = gitlab.getUser();
                     String bindAdmin = applicationProperties.getGitlab().getBindAdmin();
                     if (!myself.getUsername().equals(bindAdmin)) {
-                        throw new Exception("admin只能绑定gitlab账号aap-operator");
+                        throw new Exception("admin只能绑定gitlab账号" + bindAdmin);
                     }
                 }
             }

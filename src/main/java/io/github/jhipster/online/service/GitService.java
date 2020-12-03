@@ -70,10 +70,10 @@ public class GitService {
         remoteAddCommand.setUri(urIish);
         remoteAddCommand.call();
 
-        String currentBranch = git.getRepository().getFullBranch();
-        if (currentBranch.equals("refs/heads/master")) {
-            git.branchRename().setNewName("main").call();
-        }
+        //        String currentBranch = git.getRepository().getFullBranch();
+        ////        if (currentBranch.equals("refs/heads/master")) {
+        ////            git.branchRename().setNewName("main").call();
+        ////        }
         this.push(git, workingDir, user, organization, applicationName, gitProvider);
 
         log.debug("Repository successfully pushed!");
