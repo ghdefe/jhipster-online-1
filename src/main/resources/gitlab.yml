@@ -1,0 +1,90 @@
+# 分为ci和cd两个阶段，ci阶段使用maven进行编译并打包为docker上传到register，cd阶段运行docker镜像
+stages:
+  - ci
+  - cd_dev
+  - cd_test
+# 默认变量值，若在api设置了变量值，api优先级更高会覆盖掉这里的值
+variables:
+  # Jvm参数设定
+  JAVA_TOOL_OPTIONS: ''
+  # Maven参数设定
+  MAVEN_OPTS: ''
+  # 各阶段使用的镜像
+  # CI阶段使用的镜像
+  CI_IMAGE: '172.16.0.73:5000/maven-digitaldg:v1'
+  # CD阶段使用的镜像
+  CD_IMAGE: 'docker:stable'
+  # 基于什么打包，即from what image。该镜像必须注册到73机器的register中
+  PACKAGE_IMAGE: '172.16.0.73:5000/adoptopenjdk:11-jre-hotspot'
+  # 是否开启dev环境CD 开启则设置为true
+  CD_ENABLE_DEV: 'false'
+  # 是否开启test环境CD 开启则设置为true
+  CD_ENABLE_TEST: 'false'
+  # Docker配置
+  # Docker Register地址
+  Register: '172.16.0.73:5000'
+  # 打包镜像名称 版本号
+  DOCKER_NAME: 'test-runner:latest'
+  # docker运行时的命令
+  DOCKER_RUN: '-d -p 38001:38001'
+  # 暴露的端口
+  #  EXPOSE_PORT: "38001"
+  # 运行的配置环境
+  ProfilesActive: 'dev'
+
+# CI1阶段 maven工作
+CI:
+  # 指定使用的镜像
+  image: $CI_IMAGE
+  # 指定阶段
+  stage: ci
+  # 运行脚本, 编译测试打包
+  script:
+    # maven编译
+    # 利用jib构造docker镜像及上传到register
+    - echo "开始测试"
+    - mvn clean compile -Dmaven.test.skip=true -Denforcer.fail=false -B
+    - echo "打包镜像并上传到register"
+    - mvn jib:build -X -Djib.from.image=$PACKAGE_IMAGE -Djib.to.image=$Register/$DOCKER_NAME -Djib.allowInsecureRegistries=true -Djib.container.environment.spring.profiles.active=ProfilesActive
+  # 创建runner时指定的tag
+  tags:
+    - test
+
+# CD阶段
+CD_DEV:
+  # 仅当设置CD_ENABLE为true时CD阶段才会启动
+  only:
+    variables:
+      - $CD_ENABLE_DEV == "true"
+  image: $CD_IMAGE
+  stage: cd_dev
+  script:
+    # 运行容器
+    - echo "运行容器"
+    - docker service create $DOCKER_RUN -e JAVA_TOOL_OPTIONS=$JAVA_TOOL_OPTIONS $Register/$DOCKER_NAME
+  tags:
+    - test
+
+# CD阶段
+CD_TEST:
+  # 仅当设置CD_ENABLE为true时CD阶段才会启动
+  only:
+    variables:
+      - $CD_ENABLE_TEST == "true"
+  image: $CD_IMAGE
+  stage: cd_test
+  script:
+    #     运行容器
+    - echo "运行容器"
+    #    - if [$expose_port==''];then
+    #    - echo 'port 为空'
+    #    - else
+    #    - container_name=$(docker ps | grep "$expose_port->" | awk '{print $(NF)}')
+    #    - echo "检查是否端口被占用：$container_name，停止并删除该端口容器"
+    #    - docker stop $container_name && docker rm $container_name
+    #    - echo '删除占用端口应用$container_name'
+    #    - unset container_name
+    #    - fi
+    - docker service create $DOCKER_RUN -e JAVA_TOOL_OPTIONS=$JAVA_TOOL_OPTIONS $Register/$DOCKER_NAME
+  tags:
+    - test

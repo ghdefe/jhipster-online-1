@@ -127,6 +127,7 @@ public class ApplicationProperties {
         private String host = "https://gitlab.com";
         private String redirectUri;
         private String bindAdmin;
+        private String ymlPath;
 
         public String getClientId() {
             return clientId;
@@ -166,6 +167,14 @@ public class ApplicationProperties {
 
         public void setBindAdmin(String bindAdmin) {
             this.bindAdmin = bindAdmin;
+        }
+
+        public String getYmlPath() {
+            return ymlPath;
+        }
+
+        public void setYmlPath(String ymlPath) {
+            this.ymlPath = ymlPath;
         }
     }
 
