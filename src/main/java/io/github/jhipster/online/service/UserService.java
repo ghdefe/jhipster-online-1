@@ -366,7 +366,7 @@ public class UserService {
             gitLabApi.getUserApi().getSshKeys();
         } catch (Exception e) {
             log.debug("登录到gitlab错误:{}", e.getMessage());
-            log.debug("------开始重新登录-------");
+            log.info("------开始重新登录-------");
             GitLabApi root = GitLabApi.oauth2Login(
                 applicationProperties.getGitlab().getHost(),
                 applicationProperties.getGitlab().getUsername(),
