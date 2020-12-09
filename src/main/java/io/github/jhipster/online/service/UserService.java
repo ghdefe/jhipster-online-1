@@ -40,15 +40,10 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.StringUtils;
 import org.gitlab.api.GitlabAPI;
-import org.gitlab.api.GitlabAPIException;
 import org.gitlab.api.TokenType;
-import org.gitlab.api.models.GitlabSession;
 import org.gitlab.api.models.GitlabUser;
 import org.gitlab4j.api.GitLabApi;
-import org.gitlab4j.api.GitLabApiException;
-import org.gitlab4j.api.ProjectApi;
 import org.gitlab4j.api.models.HealthCheckInfo;
 import org.gitlab4j.api.models.Project;
 import org.hibernate.Hibernate;
@@ -360,10 +355,14 @@ public class UserService {
             .orElseThrow(() -> new Exception("No authenticated user can be found."));
 
         String gitlabOAuthToken = user.getGitlabOAuthToken();
-        GitLabApi gitLabApi = new GitLabApi(applicationProperties.getGitlab().getHost(), gitlabOAuthToken);
+        GitLabApi gitLabApi = new GitLabApi(
+            applicationProperties.getGitlab().getHost(),
+            org.gitlab4j.api.Constants.TokenType.OAUTH2_ACCESS,
+            gitlabOAuthToken
+        );
         try {
             // 检查token是否过期
-            HealthCheckInfo liveness = gitLabApi.getHealthCheckApi().getLiveness();
+            gitLabApi.getUserApi().getSshKeys();
         } catch (Exception e) {
             log.debug("登录到gitlab错误:{}", e.getMessage());
             log.debug("------开始重新登录-------");

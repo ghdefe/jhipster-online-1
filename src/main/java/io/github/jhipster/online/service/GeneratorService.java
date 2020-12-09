@@ -109,24 +109,23 @@ public class GeneratorService {
     private void zipResult(File workingDir) {
         ZipUtil.pack(workingDir, new File(workingDir + ".zip"));
     }
-
-    private void generateCICDYml(File workingDir) throws IOException {
-        log.info("开始生成.gitlab-ci.yml文件");
-        File yml = new File(workingDir, ".gitlab-ci.yml");
-        try (
-            InputStream inputStream = new FileInputStream(new File(applicationProperties.getGitlab().getYmlPath()));
-            FileOutputStream fileOutputStream = new FileOutputStream(yml)
-        ) {
-            log.debug("获取源文件成功");
-            if (!yml.exists()) {
-                yml.createNewFile();
-            }
-            byte[] buf = new byte[1024];
-            int length;
-            while ((length = inputStream.read(buf)) > 0) {
-                fileOutputStream.write(buf, 0, length);
-            }
-            log.info("生成完成");
-        }
-    }
+    //    private void generateCICDYml(File workingDir) throws IOException {
+    //        log.info("开始生成.gitlab-ci.yml文件");
+    //        File yml = new File(workingDir, ".gitlab-ci.yml");
+    //        try (
+    //            InputStream inputStream = new FileInputStream(new File(applicationProperties.getGitlab().getYmlPath()));
+    //            FileOutputStream fileOutputStream = new FileOutputStream(yml)
+    //        ) {
+    //            log.debug("获取源文件成功");
+    //            if (!yml.exists()) {
+    //                yml.createNewFile();
+    //            }
+    //            byte[] buf = new byte[1024];
+    //            int length;
+    //            while ((length = inputStream.read(buf)) > 0) {
+    //                fileOutputStream.write(buf, 0, length);
+    //            }
+    //            log.info("生成完成");
+    //        }
+    //    }
 }
