@@ -109,10 +109,9 @@ public class GitlabService implements GitProviderService {
     @Override
     public boolean isEnabled() {
         return (
-            this.applicationProperties.getGitlab().getClientId() != null &&
-            this.applicationProperties.getGitlab().getClientSecret() != null &&
-            this.applicationProperties.getGitlab().getHost() != null &&
-            this.applicationProperties.getGitlab().getRedirectUri() != null
+            this.applicationProperties.getGitlab().getUsername() != null &&
+            this.applicationProperties.getGitlab().getPassword() != null &&
+            this.applicationProperties.getGitlab().getHost() != null
         );
     }
 

@@ -49,6 +49,7 @@ import org.gitlab4j.api.models.Project;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -366,7 +367,11 @@ public class UserService {
         } catch (Exception e) {
             log.debug("登录到gitlab错误:{}", e.getMessage());
             log.debug("------开始重新登录-------");
-            GitLabApi root = GitLabApi.oauth2Login(applicationProperties.getGitlab().getHost(), "root", "12345678");
+            GitLabApi root = GitLabApi.oauth2Login(
+                applicationProperties.getGitlab().getHost(),
+                applicationProperties.getGitlab().getUsername(),
+                applicationProperties.getGitlab().getPassword()
+            );
             user.setGitlabOAuthToken(root.getAuthToken());
         }
     }
