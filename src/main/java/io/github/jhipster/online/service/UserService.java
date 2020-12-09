@@ -385,17 +385,17 @@ public class UserService {
             user.setGithubOAuthToken(code);
             user = this.githubService.getSyncedUserFromGitProvider(user);
         } else if (gitProvider.equals(GitProvider.GITLAB)) {
-            // admin只能绑定gitlab账号aap-operator
-            if (user.getLogin().equals("admin")) {
-                GitlabAPI gitlab = GitlabAPI.connect(applicationProperties.getGitlab().getHost(), code, TokenType.ACCESS_TOKEN);
-                if (Objects.nonNull(gitlab)) {
-                    GitlabUser myself = gitlab.getUser();
-                    String bindAdmin = applicationProperties.getGitlab().getBindAdmin();
-                    if (!myself.getUsername().equals(bindAdmin)) {
-                        throw new AdminBindException("admin只能绑定gitlab账号" + bindAdmin);
-                    }
-                }
-            }
+            //            // admin只能绑定gitlab账号aap-operator
+            //            if (user.getLogin().equals("admin")) {
+            //                GitlabAPI gitlab = GitlabAPI.connect(applicationProperties.getGitlab().getHost(), code, TokenType.ACCESS_TOKEN);
+            //                if (Objects.nonNull(gitlab)) {
+            //                    GitlabUser myself = gitlab.getUser();
+            //                    String bindAdmin = applicationProperties.getGitlab().getBindAdmin();
+            //                    if (!myself.getUsername().equals(bindAdmin)) {
+            //                        throw new AdminBindException("admin只能绑定gitlab账号" + bindAdmin);
+            //                    }
+            //                }
+            //            }
             user.setGitlabOAuthToken(code);
             user = this.gitlabService.getSyncedUserFromGitProvider(user);
         }
