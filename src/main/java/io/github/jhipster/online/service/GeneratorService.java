@@ -79,7 +79,7 @@ public class GeneratorService {
     )
         throws IOException, GitAPIException, URISyntaxException {
         File workingDir = generateApplication(applicationId, applicationConfiguration);
-        generateCICDYml(workingDir);
+        //        generateCICDYml(workingDir);
         this.logsService.addLog(applicationId, "Pushing the application to the Git remote repository");
         this.gitService.pushNewApplicationToGit(user, workingDir, githubOrganization, repositoryName, gitProvider);
         this.logsService.addLog(applicationId, "Application successfully pushed!");

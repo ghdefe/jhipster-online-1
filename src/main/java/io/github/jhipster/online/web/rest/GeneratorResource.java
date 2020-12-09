@@ -72,6 +72,7 @@ public class GeneratorResource {
     @PostMapping("/generate-application")
     @Secured(AuthoritiesConstants.USER)
     public ResponseEntity<String> generateApplicationOnGit(@RequestBody String applicationConfiguration) throws Exception {
+        userService.checkToken();
         applicationConfiguration = SanitizeInputs.sanitizeInput(applicationConfiguration);
         log.info("Generating application on GitHub - .yo-rc.json: {}", applicationConfiguration);
         User user = userService.getUser();

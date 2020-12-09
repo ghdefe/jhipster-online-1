@@ -40,9 +40,17 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
 import org.gitlab.api.GitlabAPI;
+import org.gitlab.api.GitlabAPIException;
 import org.gitlab.api.TokenType;
+import org.gitlab.api.models.GitlabSession;
 import org.gitlab.api.models.GitlabUser;
+import org.gitlab4j.api.GitLabApi;
+import org.gitlab4j.api.GitLabApiException;
+import org.gitlab4j.api.ProjectApi;
+import org.gitlab4j.api.models.HealthCheckInfo;
+import org.gitlab4j.api.models.Project;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -346,6 +354,24 @@ public class UserService {
             );
     }
 
+    public void checkToken() throws Exception {
+        User user = userRepository
+            .findOneByLogin(SecurityUtils.getCurrentUserLogin().orElse(null))
+            .orElseThrow(() -> new Exception("No authenticated user can be found."));
+
+        String gitlabOAuthToken = user.getGitlabOAuthToken();
+        GitLabApi gitLabApi = new GitLabApi(applicationProperties.getGitlab().getHost(), gitlabOAuthToken);
+        try {
+            // 检查token是否过期
+            HealthCheckInfo liveness = gitLabApi.getHealthCheckApi().getLiveness();
+        } catch (Exception e) {
+            log.debug("登录到gitlab错误:{}", e.getMessage());
+            log.debug("------开始重新登录-------");
+            GitLabApi root = GitLabApi.oauth2Login(applicationProperties.getGitlab().getHost(), "root", "12345678");
+            user.setGitlabOAuthToken(root.getAuthToken());
+        }
+    }
+
     public void saveToken(String code, GitProvider gitProvider) throws Exception {
         User user = userRepository
             .findOneByLogin(SecurityUtils.getCurrentUserLogin().orElse(null))
@@ -472,6 +498,7 @@ public class UserService {
 
     /**
      * Gets a list of all the authorities.
+     *
      * @return a list of all the authorities.
      */
     public List<String> getAuthorities() {
